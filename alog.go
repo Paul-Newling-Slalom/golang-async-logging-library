@@ -43,15 +43,17 @@ func New(w io.Writer) *Alog {
 func (al Alog) Start() {
 	wg := &sync.WaitGroup{}
 	for {
-		select{
+		select {
 		case msg := <-al.msgCh:
 			wg.Add(1)
 			go al.write(msg, wg)
-		case <- al.shutdownCh:
+		case <-al.shutdownCh:
 			wg.Wait()
 			al.shutdown()
-	}}
-
+			goto End
+		}
+	}
+End:
 }
 
 func (al Alog) formatMessage(msg string) string {
@@ -95,7 +97,7 @@ func (al Alog) ErrorChannel() chan error {
 // The logger will no longer function after this method has been called.
 func (al Alog) Stop() {
 	al.shutdownCh <- struct{}{}
-	
+
 	<-al.shutdownCompleteCh
 }
 
